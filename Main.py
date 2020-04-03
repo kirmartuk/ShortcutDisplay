@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QDialog, QCheckBox, QListWidget, QLabel
 from PyQt5.QtWidgets import QVBoxLayout, QWidget, QLineEdit, QHBoxLayout
 from UnixKeyListener import MyKeyboardListener
 from WindowsKeyListener import WindowsKeyListener
-import math
+
 
 KEY_MODIFIERS = ('CTRL', 'SHIFT', 'ALT')
 ORGANIZATION_NAME = 'Martyuk'
@@ -14,29 +14,30 @@ ORGANIZATION_DOMAIN = 'martyuk.com'
 APPLICATION_NAME = 'KeyListener'
 
 
-class ShortCutViewer(QDialog):
+class ShortcutViewer(QDialog):
 
     def __init__(self, parent=None):
-        super(ShortCutViewer, self).__init__(parent)
-        print('viewer>> ' + str(shortcuts))
+        super(ShortcutViewer, self).__init__(parent)
+        self.layout = QHBoxLayout()
+        self.shortcut_label = QLabel()
+        if sys.platform == 'win32':
+            self.keylistener_thread = MyKeyboardListener(shortcuts)
+            self.keylistener_thread.pressed_shortcut\
+                .connect(self.show_shortcut)
+        elif sys.platform == 'win32':
+            self.keylistener_thread = WindowsKeyListener(shortcuts)
+            self.keylistener_thread.pressed_shortcut\
+                .connect(self.show_shortcut)
         self.setup_ui()
 
     def setup_ui(self):
-        if sys.platform == 'linux':
-            self.threadd = MyKeyboardListener(shortcuts)
-            self.threadd.shortcut.connect(self.keyboardChecker)
-        elif sys.platform == 'win32':
-            self.threadd = WindowsKeyListener(shortcuts)
-            self.threadd.pressed_shortcut.connect(self.keyboardChecker)
-        self.shortcutLabel = QLabel('s')
-        self.layout = QHBoxLayout()
-        self.threadd.start()
-        self.shortcutLabel.setStyleSheet('''QWidget {
-        color: black;
+        self.keylistener_thread.start()
+        self.shortcut_label.setStyleSheet('''QWidget {
+        color: #47f9ff;
         font-weight: bold;
         font-size: 25px;
         }''')
-        self.layout.addWidget(self.shortcutLabel)
+        self.layout.addWidget(self.shortcut_label)
         self.setLayout(self.layout)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -45,12 +46,10 @@ class ShortCutViewer(QDialog):
         self.move(0, 0)
         self.show()
 
-    def keyboardChecker(self, st):
-        print(st)
-        print(checkboxstate)
-        if st in shortcuts and checkboxstate:
+    def show_shortcut(self, shortcut):
+        if shortcut in shortcuts and checkbox_state:
             self.show()
-            self.shortcutLabel.setText(st.upper())
+            self.shortcut_label.setText(shortcut.upper())
             timer = QTimer(self)
             timer.setSingleShot(True)
             timer.start(1000)
@@ -59,75 +58,73 @@ class ShortCutViewer(QDialog):
 
 class Main(QMainWindow):
     def __init__(self, parent=None):
-        global shortcuts, checkboxstate
+        global shortcuts, checkbox_state
         super(Main, self).__init__(parent)
-        qsettings = QSettings()
-        shortcuts = qsettings.value('shortcuts', list(), type=list)
-        checkboxstate = qsettings.value('checkbox', True, type=bool)
-        self.setupUi()
+        self.layout = QVBoxLayout()
+        self.checkbox = QCheckBox()
+        self.shortcut_list = QListWidget()
+        self.line_edit = QLineEdit()
+        settings = QSettings()
+        shortcuts = settings.value('shortcuts', list(), type=list)
+        checkbox_state = settings.value('checkbox', True, type=bool)
+        self.setup_ui()
+        self.shortcut_viewer = ShortcutViewer(self)
 
-    def setupUi(self):
-        self.shortcutviewer = ShortCutViewer(self)
-        self.listshrtcuts = QListWidget()
-        self.lineEdit = QLineEdit()
+    def setup_ui(self):
         widget = QWidget()
-        self.listshrtcuts.addItems(shortcuts)
-        enterbutton = QPushButton('enter')
-        enterbutton.clicked.connect(lambda:
-                                    self.addShortcut(self.lineEdit.text()))
-        inputLayout = QHBoxLayout()
-        inputLayout.addWidget(self.lineEdit)
-        inputLayout.addWidget(enterbutton)
-        hintslayout = QHBoxLayout()
+        self.shortcut_list.addItems(shortcuts)
+        enter_button = QPushButton('enter')
+        enter_button.clicked.connect(lambda:
+                                     self.add_shortcut(
+                                     self.line_edit.text().upper()))
+        input_layout = QHBoxLayout()
+        input_layout.addWidget(self.line_edit)
+        input_layout.addWidget(enter_button)
+        modifiers_layout = QHBoxLayout()
         for hint in KEY_MODIFIERS:
             button = QPushButton(self)
             button.setText(hint)
-            text = button.text()
-            button.clicked.connect(lambda ch, text=text: self.test(text))
-            hintslayout.addWidget(button)
-
-        layout = QVBoxLayout()
-
-        self.checkBox = QCheckBox()
-        self.checkBox.setText('View')
-        self.checkBox.setChecked(True)
-        self.checkBox.stateChanged.connect(self.viewer)
-
-        layout.addWidget(self.checkBox)
-        layout.addWidget(self.listshrtcuts)
-        layout.addLayout(inputLayout)
-        layout.addLayout(hintslayout)
-        widget.setLayout(layout)
+            button_title = button.text()
+            button.clicked.connect(lambda ch, text=button_title:
+                                   self.add_modifier_to_line_edit(text))
+            modifiers_layout.addWidget(button)
+        self.checkbox.setText('View')
+        self.checkbox.setChecked(checkbox_state)
+        self.checkbox.stateChanged.connect(self.change_checkbox_state)
+        self.layout.addWidget(self.checkbox)
+        self.layout.addWidget(self.shortcut_list)
+        self.layout.addLayout(input_layout)
+        self.layout.addLayout(modifiers_layout)
+        widget.setLayout(self.layout)
         self.setCentralWidget(widget)
         self.setGeometry(200, 200, 200, 200)
         self.show()
 
-    def test(self, hint):
-        currentText = self.lineEdit.text()
-        self.lineEdit.setText(currentText + hint)
+    def add_modifier_to_line_edit(self, modifier):
+        current_text = self.line_edit.text()
+        self.line_edit.setText(current_text + modifier)
 
-    def addShortcut(self, shortcut):
+    def add_shortcut(self, shortcut):
         if shortcut not in shortcuts:
             shortcuts.append(shortcut)
             qsettings = QSettings()
             qsettings.setValue('shortcuts', shortcuts)
             qsettings.sync()
-            self.listshrtcuts.addItem(shortcut)
-            self.lineEdit.clear()
+            self.shortcut_list.addItem(shortcut)
+            self.line_edit.clear()
             if sys.platform == 'win32':
-                self.shortcutviewer.threadd.addHotKeys([shortcut])
-                print(shortcuts)
+                self.shortcut_viewer.keylistener_thread.add_hotkeys([shortcut])
 
-    def viewer(self):
-        global checkboxstate
-        checkboxstate = self.checkBox.isChecked()
+    def change_checkbox_state(self):
+        global checkbox_state
+        checkbox_state = self.checkbox.isChecked()
         qsettings = QSettings()
-        qsettings.setValue('checkbox', checkboxstate)
+        qsettings.setValue('checkbox', checkbox_state)
         qsettings.sync()
-        if self.checkBox.isChecked():
-            self.shortcutviewer.show()
+        if self.checkbox.isChecked():
+            self.shortcut_viewer.show()
         else:
-            self.shortcutviewer.close()
+            self.shortcut_viewer.close()
 
 
 if __name__ == '__main__':
@@ -135,7 +132,7 @@ if __name__ == '__main__':
     QCoreApplication.setOrganizationDomain(ORGANIZATION_DOMAIN)
     QCoreApplication.setApplicationName(APPLICATION_NAME)
     shortcuts = ()
-    checkboxstate = True
+    checkbox_state = True
     app = QApplication(sys.argv)
-    ex = Main()
+    main = Main()
     sys.exit(app.exec_())

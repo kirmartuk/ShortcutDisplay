@@ -9,12 +9,13 @@ class WindowsKeyListener(QThread):
     def __init__(self, shortcuts):
         super().__init__()
         self.shortcuts = shortcuts
-        self.addHotKeys(self.shortcuts)
+        self.add_hotkeys(self.shortcuts)
 
     def run(self):
         keyboard.wait()
 
-    def addHotKeys(self, shortcuts):
-        print('sst')
+    def add_hotkeys(self, shortcuts):
         for shortcut in shortcuts:
-            keyboard.add_hotkey(shortcut, lambda parameter=shortcut: self.pressed_shortcut.emit(parameter))
+            keyboard.add_hotkey(shortcut,
+                                lambda parameter=shortcut:
+                                self.pressed_shortcut.emit(parameter))
