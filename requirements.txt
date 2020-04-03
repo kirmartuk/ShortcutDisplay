@@ -1,0 +1,13 @@
+entrypoints==0.3
+flake8==3.7.9
+flake8-polyfill==1.0.2
+keyboard==0.13.5
+mccabe==0.6.1
+pep8==1.7.1
+pep8-naming==0.10.0
+pycodestyle==2.5.0
+pyflakes==2.1.1
+pynput==1.6.8
+PyQt5==5.14.1
+PyQt5-sip==12.7.1
+six==1.14.0
