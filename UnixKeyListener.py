@@ -21,30 +21,33 @@ class MyKeyboardListener(QThread):
                 key_pressed.append(str(key)[4:])
                 key_pressed.pop(0)
             finally:
-                print(key_pressed)
-                if (key_pressed[0] is not None and
-                        key_pressed[1] is not None and
-                        key_pressed[2] is not None):
-                    if str(key_pressed[1]
-                           + '+'
-                           + key_pressed[2]
-                           ).upper() in self.shortcuts:
-                        self.pressed_shortcut.emit(str(key_pressed[1]
-                                                       + '+'
-                                                       + key_pressed[2]
-                                                       ).upper())
-                    if str(key_pressed[0]
-                           + '+'
-                           + key_pressed[1]
-                           + '+'
-                           + key_pressed[2]
-                           ).upper() in self.shortcuts:
-                        self.pressed_shortcut.emit(str(key_pressed[0]
-                                                       + '+'
-                                                       + key_pressed[1]
-                                                       + '+'
-                                                       + key_pressed[2]
-                                                       ).upper())
+                if key_pressed[0] is not None and \
+                        key_pressed[1] is not None and \
+                        key_pressed[2] is not None:
+                    if str(
+                            key_pressed[1].upper()
+                            + '+'
+                            + key_pressed[2].upper()
+                    ) in self.shortcuts:
+                        self.pressed_shortcut.emit(str(
+                            key_pressed[1]
+                            + '+'
+                            + key_pressed[2]
+                        ).upper())
+                    if str(
+                            key_pressed[0].upper()
+                            + '+'
+                            + key_pressed[1].upper()
+                            + '+'
+                            + key_pressed[2].upper()
+                    ) in self.shortcuts:
+                        self.pressed_shortcut.emit(str(
+                            key_pressed[0].upper()
+                            + '+'
+                            + key_pressed[1].upper()
+                            + '+'
+                            + key_pressed[2].upper()
+                        ))
 
         # Collect events until released
         with keyboard.Listener(
