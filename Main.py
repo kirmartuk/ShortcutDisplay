@@ -20,7 +20,7 @@ class ShortcutViewer(QDialog):
         super(ShortcutViewer, self).__init__(parent)
         self.layout = QHBoxLayout()
         self.shortcut_label = QLabel()
-        if sys.platform == 'win32':
+        if sys.platform == 'linux':
             self.keylistener_thread = MyKeyboardListener(shortcuts)
             self.keylistener_thread.pressed_shortcut\
                 .connect(self.show_shortcut)
