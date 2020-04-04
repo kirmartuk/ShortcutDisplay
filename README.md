@@ -1,7 +1,7 @@
 <html>
 
-  <body text="maroon">
-  
+<body text="maroon">  
+ <p>This programm work on Unix and Windows os</p>
 <p>Main window and shortcut display</p>
 <img src="https://github.com/kirmartuk/ShortcutDisplay/blob/master/1.png" width="600" height="400"/>
 <p>Main window</p>
